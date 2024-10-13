@@ -67,10 +67,13 @@ public class LoanService {
 			User user = loan.getUser();
 			user.sethaveLoan(false);
 			loan.setLoanStatus("Completed");
-			loan.setUser(user);
+			userRepository.save(user);
+			loanRepository.delete(loan);
+			return loan;
+		}else {
+			return loanRepository.save(loan);
 		}
-
-		return loanRepository.save(loan);
+		
 
 	}
 
