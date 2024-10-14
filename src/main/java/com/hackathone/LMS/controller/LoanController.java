@@ -58,6 +58,20 @@ public class LoanController {
 		}
 	}
 	
+	@PutMapping("/updateLoan/{loanId}")
+	public ResponseEntity<?> updateLoan(@PathVariable Long loanId, @RequestParam Double loanAmount, @RequestParam Integer tenureInMOnths){
+		Loan updatedLoan = loanService.updateLoan(loanId, loanAmount, tenureInMOnths);
+		if(updatedLoan != null) {
+			if(!updatedLoan.getLoanStatus().equals("Topup Approved")) {
+				return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorResponse("Loan Updation is Rejected", 403));
+			}else {
+				return ResponseEntity.ok(updatedLoan);
+			}
+		}else
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("Loan not found for the Id : " + loanId, 404));
+		
+	}
+	
 	@GetMapping("/PAN/{panId}")
 	public ResponseEntity<?> findUserByPanId(@PathVariable String panId) {
 

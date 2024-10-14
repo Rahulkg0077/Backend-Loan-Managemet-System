@@ -54,6 +54,7 @@ public class LoanService {
 			}
 
 			loan.setUser(user);
+			userRepository.save(user);
 			return loanRepository.save(loan);
 		}
 	}
@@ -72,9 +73,27 @@ public class LoanService {
 			return loan;
 		}else {
 			return loanRepository.save(loan);
+		}		
+
+	}
+	
+	public Loan updateLoan(Long loanId, Double loanAmount, Integer tenureInMonths) {
+		Loan loan = loanRepository.findById(loanId).orElse(null);
+		
+		Double updatedLoanAmount = loan.getLoanAmount() + loanAmount;
+		Integer updatedTenure = loan.getTenureInMonths() + tenureInMonths;
+		double emi = calculateEMI(updatedLoanAmount, rateOfInterest, updatedTenure);
+		User user = userRepository.findByPanId(loan.getUser().getPanId());
+		if (emi <= getMaxEMI(user.getSalary())) {
+			loan.setLoanAmount(updatedLoanAmount);
+			loan.setTenureInMonths(updatedTenure);
+			loan.setEmi(emi);
+			loan.setLoanStatus("Topup Approved");
+		}else {
+			loan.setLoanStatus("Topup Rejected");
 		}
 		
-
+		return loanRepository.save(loan);
 	}
 
 	public User findByPanId(String panId) {
