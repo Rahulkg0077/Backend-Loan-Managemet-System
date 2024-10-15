@@ -26,6 +26,7 @@ public class Loan {
 	private Integer tenureInMonths;
 	private Double interestRate;
 	private Double emi;
+	private Integer totalPendingEmis;
 	private String loanStatus;
 	private String rejectionReason;
 	LocalDateTime createdAt;
@@ -68,6 +69,15 @@ public class Loan {
 
 	public void setInterestRate(Double interestRate) {
 		this.interestRate = interestRate;
+	}
+	
+
+	public Integer getTotalPendingEmis() {
+		return totalPendingEmis;
+	}
+
+	public void setTotalPendingEmis(Integer totalPendingEmis) {
+		this.totalPendingEmis = totalPendingEmis;
 	}
 
 	public Double getEmi() {

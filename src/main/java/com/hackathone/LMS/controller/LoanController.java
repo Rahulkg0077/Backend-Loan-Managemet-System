@@ -26,14 +26,14 @@ public class LoanController {
 	@Autowired
 	private LoanService loanService;
 
-	@GetMapping("/{loanId}")
-	public ResponseEntity<?> getLoanDetailsById(@PathVariable Long loanId) {
-		try {
-			Loan loan = loanService.getLoanDetailsById(loanId);
+	@GetMapping("/{panId}")
+	public ResponseEntity<?> getLoanByPanId(@PathVariable String panId) throws Exception {
+		Loan loan = loanService.getLoanDetailsByPanId(panId);
+		if(loan != null) {			
 			return ResponseEntity.ok(loan);
-		} catch (Exception e) {
+		} else {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND)
-					.body(new ErrorResponse("Loan details are not avaalble for this ID: " + loanId, 404));
+					.body(new ErrorResponse("No Loan is available for this PAN: " + panId, 404));
 		}
 	}
 
@@ -85,9 +85,4 @@ public class LoanController {
 
 	}
 
-	@GetMapping
-	public ResponseEntity<?> getAllLoanDetails() {
-		List<Loan> loanList = loanService.getAllLoanDetails();
-		return ResponseEntity.ok(loanList);
-	}
 }

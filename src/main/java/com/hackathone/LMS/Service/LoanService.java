@@ -22,22 +22,19 @@ public class LoanService {
 
 	private final Double rateOfInterest = 8.5;
 
-	public Loan getLoanDetailsById(Long id) throws Exception {
-		return loanRepository.findById(id).orElseThrow(() -> new Exception());
-	}
-
-	public List<Loan> getAllLoanDetails() {
-		return loanRepository.findAll();
+	public Loan getLoanDetailsByPanId(String id) throws Exception {
+		User user = userRepository.findByPanId(id);		
+		return loanRepository.findLoanByUser(user);
 	}
 
 	public Loan applyLoan(Loan loan) {
 		User user = userRepository.findByPanId(loan.getUser().getPanId());
-				
+
 		if (user != null && user.ishaveLoan()) {
 			return null;
 		} else {
-			
-			if(user == null)
+
+			if (user == null)
 				user = loan.getUser();
 
 			double emi = calculateEMI(loan.getLoanAmount(), rateOfInterest, loan.getTenureInMonths());
@@ -52,6 +49,8 @@ public class LoanService {
 				loan.setLoanStatus("Rejected");
 				loan.setRejectionReason("EMI exceeds maximum allowed limit");
 			}
+
+			Double pendindEmi = loan.getLoanAmount() / emi;
 
 			loan.setUser(user);
 			userRepository.save(user);
@@ -71,15 +70,15 @@ public class LoanService {
 			userRepository.save(user);
 			loanRepository.delete(loan);
 			return loan;
-		}else {
+		} else {
 			return loanRepository.save(loan);
-		}		
+		}
 
 	}
-	
+
 	public Loan updateLoan(Long loanId, Double loanAmount, Integer tenureInMonths) {
 		Loan loan = loanRepository.findById(loanId).orElse(null);
-		
+
 		Double updatedLoanAmount = loan.getLoanAmount() + loanAmount;
 		Integer updatedTenure = loan.getTenureInMonths() + tenureInMonths;
 		double emi = calculateEMI(updatedLoanAmount, rateOfInterest, updatedTenure);
@@ -89,10 +88,10 @@ public class LoanService {
 			loan.setTenureInMonths(updatedTenure);
 			loan.setEmi(emi);
 			loan.setLoanStatus("Topup Approved");
-		}else {
+		} else {
 			loan.setLoanStatus("Topup Rejected");
 		}
-		
+
 		return loanRepository.save(loan);
 	}
 
@@ -108,5 +107,34 @@ public class LoanService {
 
 	private double getMaxEMI(double salary) {
 		return (salary * 30) / 100;
+	}
+
+	public void emiPayment() {
+
+		List<Loan> loans = loanRepository.findByLoanStatus("Approved");
+		
+		if (!loans.isEmpty()) {
+
+			for (Loan loan : loans) {
+				System.out.println("After" + loan);
+				if (loan.getLoanAmount() < loan.getEmi()) {
+					loanRepository.delete(loan);
+				} else {
+
+					loan.setLoanAmount(loan.getLoanAmount() - loan.getEmi());
+
+					loan.setTotalPendingEmis(loan.getTotalPendingEmis() - 1);
+
+					if (loan.getLoanAmount() == (double) 0) {
+						loanRepository.delete(loan);
+					} else {
+						
+						System.out.println("After" + loan);
+						loanRepository.save(loan);
+					}
+				}
+
+			}
+		}
 	}
 }
