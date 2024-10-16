@@ -11,7 +11,7 @@ public class EmiAutoPayment {
     @Autowired
     LoanService loanService;
 
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRate = 20000)
     public void EmiSchedule(){
         loanService.emiPayment();
     }

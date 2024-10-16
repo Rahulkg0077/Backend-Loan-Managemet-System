@@ -1,5 +1,7 @@
 package com.hackathone.LMS.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,8 +25,18 @@ public class LoanService {
 	private final Double rateOfInterest = 8.5;
 
 	public Loan getLoanDetailsByPanId(String id) throws Exception {
-		User user = userRepository.findByPanId(id);		
-		return loanRepository.findLoanByUser(user);
+		User user = userRepository.findByPanId(id);	
+		Loan loan = loanRepository.findLoanByUser(user);
+		
+		 BigDecimal bd = new BigDecimal(Double.toString(loan.getLoanAmount()));
+	     bd = bd.setScale(2, RoundingMode.HALF_UP);
+		loan.setLoanAmount(bd.doubleValue());
+		
+		
+		 BigDecimal emi = new BigDecimal(Double.toString(loan.getEmi()));
+		 emi = emi.setScale(2, RoundingMode.HALF_UP);
+		loan.setEmi(emi.doubleValue());
+	return loan;
 	}
 
 	public Loan applyLoan(Loan loan) {
@@ -51,6 +63,7 @@ public class LoanService {
 			}
 
 			Double pendindEmi = loan.getLoanAmount() / emi;
+			loan.setTotalPendingEmis(loan.getTenureInMonths());
 
 			loan.setUser(user);
 			userRepository.save(user);
