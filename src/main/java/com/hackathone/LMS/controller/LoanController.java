@@ -25,18 +25,31 @@ public class LoanController {
 
 	@Autowired
 	private LoanService loanService;
-
-	@GetMapping("/{panId}")
-	public ResponseEntity<?> getLoanByPanId(@PathVariable String panId) throws Exception {
-		Loan loan = loanService.getLoanDetailsByPanId(panId);
-		if(loan != null) {			
-			return ResponseEntity.ok(loan);
-		} else {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND)
-					.body(new ErrorResponse("No Loan is available for this PAN: " + panId, 404));
-		}
+	
+	@PostMapping("/generate")
+	public String generateOtpByPan(@RequestParam String panId) {
+		loanService.generateOtpByPan(panId);
+		return "Otp sent successfully";
 	}
+	
+	@GetMapping("/view")
+	public ResponseEntity<?> viewLoanDetails(@RequestParam String mail, @RequestParam String otp, @RequestParam String panId) throws Exception {
+		boolean isValid = loanService.validateOtp(mail, otp);
+		if(isValid) {
+			Loan loan = loanService.getLoanDetailsByPanId(panId);
+			if(loan != null) {			
+				return ResponseEntity.ok(loan);
+			} else {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND)
+						.body(new ErrorResponse("No Loan is available for this PAN: " + panId, 404));
+			}
+		}else {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(new ErrorResponse("Otp is not valid ", 401));
+		}
 
+	}
+	
 	@PostMapping("/apply")
 	public ResponseEntity<?> applyLoan(@RequestBody Loan laon) {
 		Loan savedLoan = loanService.applyLoan(laon);

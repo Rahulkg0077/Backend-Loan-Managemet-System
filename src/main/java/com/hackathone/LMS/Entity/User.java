@@ -1,5 +1,7 @@
 package com.hackathone.LMS.Entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -29,6 +31,8 @@ public class User {
 	private String panId;
 	private Double Salary;
 	private boolean haveLoan;
+	private String OTP;
+	private LocalDateTime validTill;
 
 	public Long getUserId() {
 		return userId;
@@ -93,11 +97,28 @@ public class User {
 	public void sethaveLoan(boolean haveLoan) {
 		this.haveLoan = haveLoan;
 	}
+	
+	public String getOTP() {
+		return OTP;
+	}
+
+	public void setOTP(String oTP) {
+		OTP = oTP;
+	}
+
+	public LocalDateTime getValidTill() {
+		return validTill;
+	}
+
+	public void setValidTill(LocalDateTime validTill) {
+		this.validTill = validTill;
+	}
 
 	@Override
 	public String toString() {
 		return "User [userId=" + userId + ", userName=" + userName + ", email=" + email + ", mobNumber=" + mobNumber
-				+ ", address=" + address + "]";
+				+ ", address=" + address + ", panId=" + panId + ", emailId=" + ", Salary=" + Salary
+				+ ", haveLoan=" + haveLoan + "]";
 	}
 
 }

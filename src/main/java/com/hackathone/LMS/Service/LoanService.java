@@ -4,13 +4,23 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import com.hackathone.LMS.Entity.Loan;
+import com.hackathone.LMS.Entity.LoanDumpForCompleted;
+import com.hackathone.LMS.Entity.LoanDumpForRejected;
+import com.hackathone.LMS.Entity.Otp;
 import com.hackathone.LMS.Entity.User;
+import com.hackathone.LMS.Repository.LoanDumpForCompletedRepository;
+import com.hackathone.LMS.Repository.LoanDumpForRejectedRepository;
 import com.hackathone.LMS.Repository.LoanRepository;
+import com.hackathone.LMS.Repository.OtpRepository;
 import com.hackathone.LMS.Repository.UserRepository;
 
 @Service
@@ -22,21 +32,71 @@ public class LoanService {
 	@Autowired
 	private UserRepository userRepository;
 
+	@Autowired
+	private LoanDumpForRejectedRepository rejectedLoans;
+
+	@Autowired
+	private LoanDumpForCompletedRepository comapltedLoans;
+
+	@Autowired
+	private OtpRepository otpRepository;
+	
+	@Autowired
+	private JavaMailSender mailSender;
+
 	private final Double rateOfInterest = 8.5;
 
 	public Loan getLoanDetailsByPanId(String id) throws Exception {
-		User user = userRepository.findByPanId(id);	
+		User user = userRepository.findByPanId(id);
 		Loan loan = loanRepository.findLoanByUser(user);
-		
-		 BigDecimal bd = new BigDecimal(Double.toString(loan.getLoanAmount()));
-	     bd = bd.setScale(2, RoundingMode.HALF_UP);
+
+		BigDecimal bd = new BigDecimal(Double.toString(loan.getLoanAmount()));
+		bd = bd.setScale(2, RoundingMode.HALF_UP);
 		loan.setLoanAmount(bd.doubleValue());
-		
-		
-		 BigDecimal emi = new BigDecimal(Double.toString(loan.getEmi()));
-		 emi = emi.setScale(2, RoundingMode.HALF_UP);
+
+		BigDecimal emi = new BigDecimal(Double.toString(loan.getEmi()));
+		emi = emi.setScale(2, RoundingMode.HALF_UP);
 		loan.setEmi(emi.doubleValue());
-	return loan;
+		return loan;
+	}
+
+	public void generateOtpByPan(String panId) {
+		User user = userRepository.findByPanId(panId);
+		sendOtp(user.getEmail());
+	}
+
+	public void sendOtp(String email) {
+		String otp = generateOtp();
+		Otp otpEntity = new Otp();
+		otpEntity.setemail(email);
+		otpEntity.setOtp(otp);
+		otpEntity.setExpiryTime(LocalDateTime.now().plusMinutes(5));
+		otpRepository.save(otpEntity);
+
+		SimpleMailMessage message = new SimpleMailMessage();
+		message.setTo(email);
+		message.setSubject("Your OTP to login into LoanManagementSystem");
+		message.setText("Your Otp is :" + otp);
+		mailSender.send(message);
+	}
+	
+	public boolean validateOtp(String mail, String otp) {
+		Optional<Otp> otpEntity = otpRepository.findByEmail(mail);
+		if (otpEntity.isPresent()) {
+			Otp otpDetails = otpEntity.get();
+			if(otpDetails.getOtp().equals(otp) && otpDetails.getExpiryTime().isAfter(LocalDateTime.now())) {
+				otpRepository.deleteById(otpDetails.getId());
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
+	public String generateOtp() {
+		Random random = new Random();
+		int otp = 100000 + random.nextInt(900000);
+		return String.valueOf(otp);
 	}
 
 	public Loan applyLoan(Loan loan) {
@@ -60,9 +120,9 @@ public class LoanService {
 			} else {
 				loan.setLoanStatus("Rejected");
 				loan.setRejectionReason("EMI exceeds maximum allowed limit");
+				moveRejectedAndCompletedLoanToDump(loan);
 			}
 
-			Double pendindEmi = loan.getLoanAmount() / emi;
 			loan.setTotalPendingEmis(loan.getTenureInMonths());
 
 			loan.setUser(user);
@@ -82,6 +142,7 @@ public class LoanService {
 			loan.setLoanStatus("Completed");
 			userRepository.save(user);
 			loanRepository.delete(loan);
+			moveRejectedAndCompletedLoanToDump(loan);
 			return loan;
 		} else {
 			return loanRepository.save(loan);
@@ -122,32 +183,61 @@ public class LoanService {
 		return (salary * 30) / 100;
 	}
 
+	private void moveRejectedAndCompletedLoanToDump(Loan loan) {
+
+		if (loan.getLoanStatus().equals("Completed")) {
+			LoanDumpForCompleted loanDump = new LoanDumpForCompleted();
+			loanDump.setLoanId(loan.getLoanId());
+			loanDump.setUserId(loan.getUser().getUserId());
+			loanDump.setLoanAmount(loan.getLoanAmount());
+			loanDump.setTenureInMonths(loan.getTenureInMonths());
+			loanDump.setInterestRate(loan.getInterestRate());
+			loanDump.setEmi(loan.getEmi());
+			loanDump.setTotalPendingEmis(loan.getTotalPendingEmis());
+			loanDump.setLoanStatus(loan.getLoanStatus());
+			loanDump.setRejectionReason(loan.getRejectionReason());
+			loanDump.setCreatedAt(loan.getCreatedAt());
+
+			comapltedLoans.save(loanDump);
+
+		} else if (loan.getLoanStatus().equals("Rejected")) {
+			LoanDumpForRejected loanDump = new LoanDumpForRejected();
+			loanDump.setLoanId(loan.getLoanId());
+			loanDump.setUserId(loan.getUser().getUserId());
+			loanDump.setLoanAmount(loan.getLoanAmount());
+			loanDump.setTenureInMonths(loan.getTenureInMonths());
+			loanDump.setInterestRate(loan.getInterestRate());
+			loanDump.setEmi(loan.getEmi());
+			loanDump.setTotalPendingEmis(loan.getTotalPendingEmis());
+			loanDump.setLoanStatus(loan.getLoanStatus());
+			loanDump.setRejectionReason(loan.getRejectionReason());
+			loanDump.setCreatedAt(loan.getCreatedAt());
+
+			rejectedLoans.save(loanDump);
+		}
+
+		loanRepository.delete(loan);
+	}
+
 	public void emiPayment() {
+		List<Loan> loans = loanRepository.findAll();
 
-		List<Loan> loans = loanRepository.findByLoanStatus("Approved");
-		
-		if (!loans.isEmpty()) {
+		for (Loan loan : loans) {
+			if (loan.getLoanAmount() <= loan.getEmi()) {
+				loan.setLoanStatus("Completed");
+				moveRejectedAndCompletedLoanToDump(loan);
+			} else {
+				loan.setLoanAmount(loan.getLoanAmount() - loan.getEmi());
+				loan.setTotalPendingEmis(loan.getTotalPendingEmis() - 1);
 
-			for (Loan loan : loans) {
-				System.out.println("After" + loan);
-				if (loan.getLoanAmount() < loan.getEmi()) {
-					loanRepository.delete(loan);
+				if (loan.getLoanAmount() == 0) {
+					loan.setLoanStatus("Completed");
+					moveRejectedAndCompletedLoanToDump(loan);
 				} else {
-
-					loan.setLoanAmount(loan.getLoanAmount() - loan.getEmi());
-
-					loan.setTotalPendingEmis(loan.getTotalPendingEmis() - 1);
-
-					if (loan.getLoanAmount() == (double) 0) {
-						loanRepository.delete(loan);
-					} else {
-						
-						System.out.println("After" + loan);
-						loanRepository.save(loan);
-					}
+					loanRepository.save(loan);
 				}
-
 			}
 		}
 	}
+
 }
