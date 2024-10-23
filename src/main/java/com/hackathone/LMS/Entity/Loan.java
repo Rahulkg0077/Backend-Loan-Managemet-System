@@ -1,122 +1,41 @@
 package com.hackathone.LMS.Entity;
 
+import jakarta.persistence.*;
+import lombok.Data;
+
 import java.time.LocalDateTime;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-
 @Entity
-@Table(name = "Loan")
+@Data
 public class Loan {
-
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long loanId;
+	private Long id;
+	private Double loanAmount;
+	private Integer tenureInYears;
+	private Integer tenureInMonths;
+	private LocalDateTime emiDebitedDate;
+	private LocalDateTime createdAt;
+	private User createdBy;
+	private LocalDateTime modifiedAt;
+	private User modifiedBy;
 
-	@OneToOne
-	@JoinColumn(name = "userId", nullable = false)
+	@ManyToOne
+	@JoinColumn(name = "user_id")
 	private User user;
 
-	private Double loanAmount;
-	private Integer tenureInMonths;
-	private Double interestRate;
-	private Double emi;
-	private Integer totalPendingEmis;
-	private String loanStatus;
-	private String rejectionReason;
-	LocalDateTime createdAt;
+	@ManyToOne
+	@JoinColumn(name = "loan_type_id")
+	private LoanType loanType;
 
-	public Long getLoanId() {
-		return loanId;
-	}
+	@ManyToOne
+	@JoinColumn(name = "loan_status_id")
+	private LoanStatus loanStatus;
 
-	public void setLoanId(Long loanId) {
-		this.loanId = loanId;
-	}
 
-	public User getUser() {
-		return user;
-	}
 
-	public void setUser(User user) {
-		this.user = user;
-	}
+//	@OneToMany(mappedBy = "loan")
+//	private List<CompletedEmis> completedEmis;
 
-	public Double getLoanAmount() {
-		return loanAmount;
-	}
-
-	public void setLoanAmount(Double loanAmount) {
-		this.loanAmount = loanAmount;
-	}
-
-	public Integer getTenureInMonths() {
-		return tenureInMonths;
-	}
-
-	public void setTenureInMonths(Integer tenureInMonths) {
-		this.tenureInMonths = tenureInMonths;
-	}
-
-	public Double getInterestRate() {
-		return interestRate;
-	}
-
-	public void setInterestRate(Double interestRate) {
-		this.interestRate = interestRate;
-	}
-	
-
-	public Integer getTotalPendingEmis() {
-		return totalPendingEmis;
-	}
-
-	public void setTotalPendingEmis(Integer totalPendingEmis) {
-		this.totalPendingEmis = totalPendingEmis;
-	}
-
-	public Double getEmi() {
-		return emi;
-	}
-
-	public void setEmi(Double emi) {
-		this.emi = emi;
-	}
-
-	public String getLoanStatus() {
-		return loanStatus;
-	}
-
-	public void setLoanStatus(String loanStatus) {
-		this.loanStatus = loanStatus;
-	}
-
-	public String getRejectionReason() {
-		return rejectionReason;
-	}
-
-	public void setRejectionReason(String rejectionReason) {
-		this.rejectionReason = rejectionReason;
-	}
-
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	@Override
-	public String toString() {
-		return "Loan [loanId=" + loanId + ", user=" + user + ", loanAmount=" + loanAmount + ", tenureInMonths="
-				+ tenureInMonths + ", interestRate=" + interestRate + ", emi=" + emi + ", approvalStatus="
-				+ loanStatus + ", rejectionReason=" + rejectionReason + ", createdAt=" + createdAt + "]";
-	}
-
+	// Getters and Setters
 }

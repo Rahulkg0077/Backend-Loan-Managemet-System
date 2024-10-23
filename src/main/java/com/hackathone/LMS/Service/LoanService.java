@@ -138,8 +138,8 @@ public class LoanService {
 		loan.setLoanAmount(principal);
 		if (principal == 0) {
 			User user = loan.getUser();
-			user.sethaveLoan(false);
-			loan.setLoanStatus("Completed");
+			//user.sethaveLoan(false);
+			//loan.setLoanStatus("Completed");
 			userRepository.save(user);
 			loanRepository.delete(loan);
 			moveRejectedAndCompletedLoanToDump(loan);
@@ -187,8 +187,8 @@ public class LoanService {
 
 		if (loan.getLoanStatus().equals("Completed")) {
 			LoanDumpForCompleted loanDump = new LoanDumpForCompleted();
-			loanDump.setLoanId(loan.getLoanId());
-			loanDump.setUserId(loan.getUser().getUserId());
+			loanDump.setLoanId(loan.getId());
+			loanDump.setUserId(loan.getUser().getId());
 			loanDump.setLoanAmount(loan.getLoanAmount());
 			loanDump.setTenureInMonths(loan.getTenureInMonths());
 			loanDump.setInterestRate(loan.getInterestRate());

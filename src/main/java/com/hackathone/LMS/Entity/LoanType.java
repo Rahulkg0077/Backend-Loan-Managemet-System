@@ -8,27 +8,20 @@ import java.util.List;
 
 @Entity
 @Data
-public class User {
+public class LoanType {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String username;
+    private String name;
     private String displayName;
-    private String email;
-    private String password;
-    private String panNo;
-    private String mobNumber;
-    private Boolean isKYCCompleted;
+    private Double interestRate;
     private LocalDateTime createdAt;
-    private User createdBy;
+    private String createdBy;
     private LocalDateTime modifiedAt;
-    private User modifiedBy;
+    private String modifiedBy;
 
-//    @OneToMany(mappedBy = "user")
+//    @OneToMany(mappedBy = "loanType")
 //    private List<Loan> loans;
 
-//    @OneToOne
-//    @JoinColumn(name = "kyc_id")
-//    private KYC kyc;
-
+    // Getters and Setters
 }
