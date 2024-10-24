@@ -19,6 +19,7 @@ public class Loan {
 	private User createdBy;
 	private LocalDateTime modifiedAt;
 	private User modifiedBy;
+	private Double interest;
 
 	@ManyToOne
 	@JoinColumn(name = "user_id")
