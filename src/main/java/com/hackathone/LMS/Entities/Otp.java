@@ -1,4 +1,4 @@
-package com.hackathone.LMS.Entity;
+package com.hackathone.LMS.Entities;
 
 import java.time.LocalDateTime;
 
@@ -13,7 +13,7 @@ import lombok.Data;
 public class Otp {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
 	private String email;
